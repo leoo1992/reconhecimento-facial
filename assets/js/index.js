@@ -1,24 +1,15 @@
 const cam = document.getElementById("cam");
-
-navigator.mediaDevices.enumerateDevices().then((devices) => {
-  if (Array.isArray(devices)) {
-    devices.forEach((device) => {
-      if (device.kind === "videoinput") {
-        const CamVideo = device.label;
-        console.log("Dispositivo = " + CamVideo);
-      }
-    })    
-  }
-});
-
+let CamVideo ="";
 
 const startVideo = () => {
   navigator.mediaDevices.enumerateDevices().then((devices) => {
     if (Array.isArray(devices)) {
       devices.forEach((device) => {
         if (device.kind === "videoinput") {
-          //includes('') <- nome da camera é selecionado (label)
-          if (device.label.includes("")) {
+          CamVideo = device.label;
+          console.log("Dispositivo = " + device.label);
+          //includes() <- nome da camera é selecionado (label)
+          if (device.label.includes(CamVideo)) {
             //selecionando a camera no navegador pelo id dela
             navigator.getUserMedia(
               {

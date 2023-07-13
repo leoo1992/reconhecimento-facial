@@ -1,13 +1,14 @@
 const cam = document.getElementById("cam");
-let CamVideo ="";
+let CamVideo = ""; //variável de identificação da camera
 
 const startVideo = () => {
   navigator.mediaDevices.enumerateDevices().then((devices) => {
     if (Array.isArray(devices)) {
       devices.forEach((device) => {
+        //rastreia os dispositivos do tipo video input (cameras) avalie se o dispositivo possui mais de uma camera
         if (device.kind === "videoinput") {
           CamVideo = device.label;
-          console.log("Dispositivo = " + device.label);
+          console.log ("Dispositivo = " + device.label);
           //includes() <- nome da camera é selecionado (label)
           if (device.label.includes(CamVideo)) {
             //selecionando a camera no navegador pelo id dela
@@ -45,12 +46,12 @@ const loadLabels = () => {
         if (detections) {
           descriptions.push(detections.descriptor);
         }
-        console.log(label+ " "+ i);
+        console.log(label + " " + i);
       }
       return new faceapi.LabeledFaceDescriptors(label, descriptions);
     })
   );
-}
+};
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri("/assets/lib/face-api/models"),

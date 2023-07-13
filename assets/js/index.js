@@ -1,5 +1,17 @@
 const cam = document.getElementById("cam");
 
+navigator.mediaDevices.enumerateDevices().then((devices) => {
+  if (Array.isArray(devices)) {
+    devices.forEach((device) => {
+      if (device.kind === "videoinput") {
+        const CamVideo = device.label;
+        console.log("Dispositivo = " + CamVideo);
+      }
+    })    
+  }
+});
+
+
 const startVideo = () => {
   navigator.mediaDevices.enumerateDevices().then((devices) => {
     if (Array.isArray(devices)) {

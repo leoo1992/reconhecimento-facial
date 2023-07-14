@@ -65,7 +65,10 @@ window.onload = async () => {
     try {
       const labeledDescriptors = await loadLabels();
 
-      const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+      const faceMatcher = new faceapi.FaceMatcher(
+        labeledDescriptors,
+        0.6
+      );
 
       setInterval(async () => {
         const detections = await faceapi
@@ -77,14 +80,12 @@ window.onload = async () => {
           faceMatcher.findBestMatch(d.descriptor)
         );
 
-        const canvas = document.createElement("canvas");
+        const canvas = faceapi.createCanvasFromMedia(cam);
         document.body.appendChild(canvas);
 
-        canvas.width = cam.videoWidth;
-        canvas.height = cam.videoHeight;
+        faceapi.matchDimensions(canvas, cam);
 
-        const context = canvas.getContext("2d");
-        context.drawImage(cam, 0, 0);
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
         faceapi.draw.drawDetections(canvas, detections);
         results.forEach((result, index) => {
@@ -143,7 +144,10 @@ window.onload = async () => {
             console.log(label + ": Carregada foto: " + i);
           } catch (error) {
             console.error(
-              "Erro ao carregar a imagem de: " + label + " na posição: " + i,
+              "Erro ao carregar a imagem de: " +
+                label +
+                " na posição: " +
+                i,
               error
             );
           }

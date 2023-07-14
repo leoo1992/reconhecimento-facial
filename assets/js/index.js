@@ -1,3 +1,10 @@
+// Função para verificar a disponibilidade da API do navegador
+const checkBrowserCompatibility = () => {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.FaceDetector || !window.CanvasRenderingContext2D) {
+    throw new Error("O navegador não suporta as APIs necessárias.");
+  }
+};
+
 // Função para carregar os modelos e iniciar o vídeo da câmera
 const loadModelsAndStartVideo = async () => {
   try {
@@ -46,6 +53,11 @@ const startVideo = async () => {
 
     // Aguardar um tempo para a câmera estar pronta
     await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    // Verificar se o stream da câmera foi carregado corretamente
+    if (!cam.srcObject || !cam.srcObject.getTracks().length) {
+      throw new Error("Ocorreu um erro ao carregar o stream da câmera.");
+    }
 
     // Carregar os rótulos das imagens
     const labels = await loadLabels();
@@ -157,14 +169,23 @@ const loadLabels = async () => {
   }
 
   if (labeledFaceDescriptors.length === 0) {
-    throw new Error(
-      "Não foi possível detectar nenhum rosto válido nas imagens de treinamento."
+    console.warn(
+      "Nenhum rosto válido foi detectado nas imagens de treinamento."
     );
+  } else {
+    console.log("Rótulos carregados com sucesso.");
   }
 
-  console.log("Rótulos carregados com sucesso.");
   return labeledFaceDescriptors;
 };
+
+// Verificar a disponibilidade da API do navegador
+try {
+  checkBrowserCompatibility();
+} catch (error) {
+  console.error("O navegador não é compatível:", error);
+  // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário ou enviar um relatório de erro.
+}
 
 // Chamar a função para carregar os modelos e iniciar o vídeo da câmera
 loadModelsAndStartVideo();

@@ -36,7 +36,7 @@ const loadLabels = async () => {
     const labels = [
       "Antony",
       "Eduardo",
-      "Fábio",
+      "Fabio",
       "Fernando",
       "Filipe",
       "Leonardo",

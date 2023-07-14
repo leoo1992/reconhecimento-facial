@@ -48,45 +48,42 @@ const loadLabels = async () => {
       "Salvan",
       "Samuel",
     ]; // Array de pessoas
+    const labeledDescriptors = [];
 
-    await Promise.all(
-      labels.map(async (label) => {
-        const descriptions = [];
+    for (const label of labels) {
+      const descriptions = [];
 
-        // Percorre as imagens de cada pasta
-        for (let i = 1; i <= 3; i++) {
-          try {
-            const img = await faceapi.fetchImage(
-              `/assets/lib/face-api/labels/${label}/${i}.jpg`
-            );
+      for (let i = 1; i <= 3; i++) {
+        try {
+          const img = await faceapi.fetchImage(
+            `/assets/lib/face-api/labels/${label}/${i}.jpg`
+          );
 
-            // Detecta a face, pontos de referência e descritores da face na imagem
-            const detections = await faceapi
-              .detectSingleFace(img) // verifica uma pessoa por foto
-              .withFaceLandmarks() // verifica marcas de expressão
-              .withFaceDescriptor(); // identifica as descrições da face
+          const detections = await faceapi
+            .detectSingleFace(img)
+            .withFaceLandmarks()
+            .withFaceDescriptor();
 
-            if (detections) {
-              // adiciona no array as descrições da face identificada
-              descriptions.push(detections.descriptor);
-            }
-            console.log(label + ": Carregada foto: " + i);
-          } catch (error) {
-            console.error(
-              "Erro ao carregar a imagem de: " + label + " na posição: " + i,
-              error
-            );
+          if (detections) {
+            descriptions.push(detections.descriptor);
           }
-        }
-
-        // Cria um objeto de descritores de rosto rotulados para o nome atual
-        if (descriptions.length > 0) {
-          labeledDescriptors.push(
-            new faceapi.LabeledFaceDescriptors(label, descriptions)
+          console.log(label + ": Carregada foto: " + i);
+        } catch (error) {
+          console.error(
+            "Erro ao carregar a imagem de: " + label + " na posição: " + i,
+            error
           );
         }
-      })
-    );
+      }
+
+      if (descriptions.length > 0) {
+        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+          label,
+          descriptions
+        );
+        labeledDescriptors.push(labeledDescriptor);
+      }
+    }
 
     return labeledDescriptors;
   } catch (error) {

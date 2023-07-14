@@ -127,7 +127,7 @@ const loadLabels = async () => {
       "Raphael",
       "Rogerio",
       "Salvan",
-      "Samuel",
+      "Samuel"
     ]; // Array de pessoas
     const labeledDescriptors = [];
 
@@ -146,8 +146,8 @@ const loadLabels = async () => {
             .withFaceDescriptor();
 
           if (!detections) {
-            console.error(
-              `Não foi possível detectar o rosto na imagem ${i} de ${label}.`
+            console.warn(
+              `Não foi possível detectar um rosto visível na imagem ${i} de ${label}. Ignorando esta imagem.`
             );
             continue;
           }
@@ -175,12 +175,17 @@ const loadLabels = async () => {
       }
     }
 
+    if (labeledDescriptors.length === 0) {
+      throw new Error("Nenhum rótulo de imagem foi carregado.");
+    }
+
     return labeledDescriptors;
   } catch (error) {
     console.error("Erro ao carregar os rótulos das imagens:", error);
     return [];
   }
 };
+
 
 
   // Carrega os modelos necessários, inicia o vídeo e detecta rostos

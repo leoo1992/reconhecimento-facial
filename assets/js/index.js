@@ -52,9 +52,10 @@
     for (const label of labels) {
       const descriptions = [];
       for (let i = 1; i <= 3; i++) {
-        const img = await faceapi.fetchImage(
-          `/assets/lib/face-api/labels/${label}/${i}.jpg`
-        );
+        const imagePath = `/assets/lib/face-api/labels/${label}/${i}.jpg`;
+        console.log('Image path:', imagePath);
+  
+        const img = await faceapi.fetchImage(imagePath);
         const detections = await faceapi
           .detectSingleFace(img)
           .withFaceLandmarks()

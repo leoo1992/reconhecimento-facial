@@ -181,4 +181,8 @@ try {
   }
 } catch (error) {
   console.error("O navegador não é compatível:", error);
-  // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário
+  // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário ou enviar um relatório de erro.
+}
+
+// Chamar a função para carregar os modelos e iniciar o vídeo da câmera
+loadModelsAndStartVideo();

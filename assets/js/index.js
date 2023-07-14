@@ -1,8 +1,37 @@
 // Obtém o elemento de vídeo da câmera
 const cam = document.getElementById("cam");
 
-// Função para iniciar o vídeo da câmera
-const startVideo = () => {
+// Função para iniciar o vídeo da câmera frontal...dispositivo notebook ou celular
+const startVideo = async () => {
+  try {
+    const isMobileDevice =
+      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+    let constraints = {};
+
+    if (isMobileDevice) {
+      constraints = {
+        video: {
+          facingMode: { exact: "environment" },
+        },
+      };
+    } else {
+      constraints = {
+        video: { facingMode: "user" },
+      };
+    }
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    cam.srcObject = stream;
+  } catch (error) {
+    console.error("Erro ao iniciar o vídeo da câmera:", error);
+  }
+};
+
+// Função para iniciar o vídeo da câmera escolhida
+/*const startVideo = () => {
   navigator.mediaDevices.enumerateDevices().then((devices) => {
     if (Array.isArray(devices)) {
       devices.forEach((device) => {
@@ -26,47 +55,52 @@ const startVideo = () => {
       });
     }
   });
-};
+};*/
 
 // Função para carregar os rótulos das imagens de cada pessoa cadastrada
 const loadLabels = async () => {
   // Array de cadastros - Adicione uma pasta com 3 fotos jpg para cada nome/pessoa
   //o nome da pasta deve ser o nome da pessoa
   //As imagens deve ser de 60px de altura com seu nome de 1 a 3.jpg <-exp
-  const labels = ["Leonardo"]; // Exemplo com um único + pode ter mais no array
-  const labeledDescriptors = [];
+  try {
+    const labels = ["Leonardo"]; // Exemplo com um único + pode ter mais no array
+    const labeledDescriptors = [];
 
-  await Promise.all(
-    labels.map(async (label) => {
-      const descriptions = [];
+    await Promise.all(
+      labels.map(async (label) => {
+        const descriptions = [];
 
-    // Percorre as imagens de cada pasta
-    for (let i = 1; i <= 3; i++) {
-      const img = await faceapi.fetchImage(
-        `/assets/lib/face-api/labels/${label}/${i}.jpg`
-      );
+        // Percorre as imagens de cada pasta
+        for (let i = 1; i <= 3; i++) {
+          const img = await faceapi.fetchImage(
+            `/assets/lib/face-api/labels/${label}/${i}.jpg`
+          );
 
-      // Detecta a face, pontos de referência e descritores da face na imagem
-      const detections = await faceapi
-        .detectSingleFace(img) // verifica uma pessoa por foto
-        .withFaceLandmarks() //verifica marcas de expressão
-        .withFaceDescriptor(); // identifica as descrições da face
+          // Detecta a face, pontos de referência e descritores da face na imagem
+          const detections = await faceapi
+            .detectSingleFace(img) // verifica uma pessoa por foto
+            .withFaceLandmarks() //verifica marcas de expressão
+            .withFaceDescriptor(); // identifica as descrições da face
 
-      if (detections) {
-        //adiciona no array as descrições da face identificada
-        descriptions.push(detections.descriptor);
-      }
-      console.log(label + " " + i);
-    }
+          if (detections) {
+            //adiciona no array as descrições da face identificada
+            descriptions.push(detections.descriptor);
+          }
+          console.log(label + ": Carregada foto: " + i);
+        }
 
-    // Cria um objeto de descritores de rosto rotulados para o nome atual
-    labeledDescriptors.push(
-      new faceapi.LabeledFaceDescriptors(label, descriptions)
+        // Cria um objeto de descritores de rosto rotulados para o nome atual
+        labeledDescriptors.push(
+          new faceapi.LabeledFaceDescriptors(label, descriptions)
+        );
+      })
     );
-  })
-);
 
-  return labeledDescriptors;
+    return labeledDescriptors;
+  } catch (error) {
+    console.error("Erro ao carregar os rótulos das imagens:", error);
+    return [];
+  }
 };
 
 // Carrega os modelos necessários e inicia o vídeo quando eles estiverem prontos
@@ -76,11 +110,14 @@ Promise.all([
   faceapi.nets.faceRecognitionNet.loadFromUri("/assets/lib/face-api/models"), //resize do video
   faceapi.nets.faceExpressionNet.loadFromUri("/assets/lib/face-api/models"), // analisa expressões faciais
   faceapi.nets.ssdMobilenetv1.loadFromUri("/assets/lib/face-api/models"), //requisito
-]).then(startVideo);
+])
+  .then(() => startVideo())
+  .catch((error) => console.error("Erro ao carregar os modelos:", error));
 
 // Evento "play" do vídeo da câmera
 cam.addEventListener("play", async () => {
   // Cria um canvas para desenhar as detecções faciais
+  try {
   const canvas = faceapi.createCanvasFromMedia(cam);
   const canvasSize = {
     width: cam.width,
@@ -122,17 +159,14 @@ cam.addEventListener("play", async () => {
     // Desenha as detecções faciais no canvas
     faceapi.draw.drawDetections(canvas, resizedDetections);
 
-
     // Desenha o nome da pessoa
     results.forEach((result, index) => {
       const box = resizedDetections[index].detection.box;
       const { label } = result;
-      new faceapi.draw.DrawTextField(
-        [`${label}`],
-        box.topRight
-        ).draw(canvas);
-      });
-    }, 300);
-  });
-
-   
+      new faceapi.draw.DrawTextField([`${label}`], box.topLeft).draw(canvas);
+    });
+  }, 250);
+} catch (error) {
+  console.error("Erro durante a detecção de rostos:", error);
+}
+});

@@ -61,132 +61,127 @@ window.onload = async () => {
   };
 
   // Função para detectar rostos e realizar o reconhecimento facial
-  // Função para detectar rostos e realizar o reconhecimento facial
-const detectFaces = async () => {
-  try {
-    const labeledDescriptors = await loadLabels();
+  const detectFaces = async () => {
+    try {
+      const labeledDescriptors = await loadLabels();
 
-    if (labeledDescriptors.length === 0) {
-      console.error("Nenhum rótulo de imagem foi carregado.");
-      return;
-    }
+      if (labeledDescriptors.length === 0) {
+        console.error("Nenhum rótulo de imagem foi carregado.");
+        return;
+      }
 
-    const faceMatcher = new faceapi.FaceMatcher(
-      labeledDescriptors,
-      0.6
-    );
-
-    setInterval(async () => {
-      const detections = await faceapi
-        .detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceDescriptors();
-
-      const results = detections.map((d) =>
-        faceMatcher.findBestMatch(d.descriptor)
+      const faceMatcher = new faceapi.FaceMatcher(
+        labeledDescriptors,
+        0.6
       );
 
-      const canvas = faceapi.createCanvasFromMedia(cam);
+      const canvas = document.createElement("canvas");
       document.body.appendChild(canvas);
-
       faceapi.matchDimensions(canvas, cam);
 
-      canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+      setInterval(async () => {
+        const detections = await faceapi
+          .detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks()
+          .withFaceDescriptors();
 
-      faceapi.draw.drawDetections(canvas, detections);
-      results.forEach((result, index) => {
-        const { label, distance } = result;
-        const box = detections[index].detection.box;
+        const results = detections.map((d) =>
+          faceMatcher.findBestMatch(d.descriptor)
+        );
 
-        const drawOptions = {
-          label: `${label}`,
-        };
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-        const drawBox = new faceapi.draw.DrawBox(box, drawOptions);
-        drawBox.draw(canvas);
-      });
-    }, 250);
-  } catch (error) {
-    console.error("Erro durante a detecção de rostos:", error);
-  }
-};
+        faceapi.draw.drawDetections(canvas, detections);
+        results.forEach((result, index) => {
+          const { label, distance } = result;
+          const box = detections[index].detection.box;
 
+          const drawOptions = {
+            label: `${label}`,
+          };
+
+          const drawBox = new faceapi.draw.DrawBox(box, drawOptions);
+          drawBox.draw(canvas);
+        });
+      }, 250);
+    } catch (error) {
+      console.error("Erro durante a detecção de rostos:", error);
+    }
+  };
 
   // Função para carregar os rótulos das imagens de cada pessoa cadastrada
-const loadLabels = async () => {
-  try {
-    const labels = [
-      "Antony",
-      "Eduardo",
-      "Fabio",
-      "Fernando",
-      "Filipe",
-      "Leonardo",
-      "Lucas",
-      "Prof Samuel",
-      "Raphael",
-      "Rogerio",
-      "Salvan",
-      "Samuel"
-    ]; // Array de pessoas
-    const labeledDescriptors = [];
+  const loadLabels = async () => {
+    try {
+      const labels = [
+        "Antony",
+        "Eduardo",
+        "Fabio",
+        "Fernando",
+        "Filipe",
+        "Leonardo",
+        "Lucas",
+        "Prof Samuel",
+        "Raphael",
+        "Rogerio",
+        "Salvan",
+        "Samuel"
+      ]; // Array de pessoas
+      const labeledDescriptors = [];
 
-    for (const label of labels) {
-      const descriptions = [];
+      for (const label of labels) {
+        const descriptions = [];
 
-      for (let i = 1; i <= 3; i++) {
-        try {
-          const img = await faceapi.fetchImage(
-            `/assets/lib/face-api/labels/${label}/${i}.jpg`
-          );
-
-          const detections = await faceapi
-            .detectSingleFace(img)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-
-          if (!detections) {
-            console.warn(
-              `Não foi possível detectar um rosto visível na imagem ${i} de ${label}. Ignorando esta imagem.`
+        for (let i = 1; i <= 3; i++) {
+          try {
+            const img = await faceapi.fetchImage(
+              `/assets/lib/face-api/labels/${label}/${i}.jpg`
             );
-            continue;
-          }
 
-          descriptions.push(detections.descriptor);
-          console.log(label + ": Carregada foto: " + i);
-        } catch (error) {
+            const detections = await faceapi
+              .detectSingleFace(img)
+              .withFaceLandmarks()
+              .withFaceDescriptor();
+
+            if (!detections) {
+              console.warn(
+                `Não foi possível detectar um rosto visível na imagem ${i} de ${label}. Ignorando esta imagem.`
+              );
+              continue;
+            }
+
+            descriptions.push(detections.descriptor);
+            console.log(label + ": Carregada foto: " + i);
+          } catch (error) {
+            console.error(
+              "Erro ao carregar a imagem de: " + label + " na posição: " + i,
+              error
+            );
+          }
+        }
+
+        if (descriptions.length > 0) {
+          const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+            label,
+            descriptions
+          );
+          labeledDescriptors.push(labeledDescriptor);
+        } else {
           console.error(
-            "Erro ao carregar a imagem de: " + label + " na posição: " + i,
-            error
+            `Nenhum rosto detectado nas imagens de ${label}.`
           );
         }
       }
 
-      if (descriptions.length > 0) {
-        const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
-          label,
-          descriptions
-        );
-        labeledDescriptors.push(labeledDescriptor);
-      } else {
-        console.error(
-          `Nenhum rosto detectado nas imagens de ${label}.`
-        );
+      if (labeledDescriptors.length === 0) {
+        throw new Error("Nenhum rótulo de imagem foi carregado.");
       }
+
+      return labeledDescriptors;
+    } catch (error) {
+      console.error("Erro ao carregar os rótulos das imagens:", error);
+      return [];
     }
-
-    if (labeledDescriptors.length === 0) {
-      throw new Error("Nenhum rótulo de imagem foi carregado.");
-    }
-
-    return labeledDescriptors;
-  } catch (error) {
-    console.error("Erro ao carregar os rótulos das imagens:", error);
-    return [];
-  }
-};
-
-
+  };
 
   // Carrega os modelos necessários, inicia o vídeo e detecta rostos
   await loadModels();

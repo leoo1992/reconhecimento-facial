@@ -30,6 +30,7 @@ const startVideo = async () => {
   }
 };
 
+let labeledDescriptors = [];
 // Função para carregar os rótulos das imagens de cada pessoa cadastrada
 const loadLabels = async () => {
   try {
@@ -47,7 +48,6 @@ const loadLabels = async () => {
       "Salvan",
       "Samuel",
     ]; // Array de pessoas
-    const labeledDescriptors = [];
 
     await Promise.all(
       labels.map(async (label) => {

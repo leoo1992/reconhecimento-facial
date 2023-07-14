@@ -32,7 +32,8 @@ const startVideo = () => {
 // Função para carregar os rótulos das imagens de cada pessoa cadastrada
 const loadLabels = async () => {
   // Array de cadastros - Adicione uma pasta com 3 fotos jpg para cada nome
-  const labels = ["Leonardo"]; // Exemplo com um único nome "Leonardo"
+  //As imagens deve ser menores possíveis e o nome da pasta deve ser o nome da pessoa
+  const labels = ["Leonardo"]; // Exemplo com um único + pode ter mais no array
   const labeledDescriptors = [];
 
   await Promise.all(

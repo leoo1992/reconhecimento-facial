@@ -138,7 +138,8 @@ cam.addEventListener("play", async () => {
       const resizedDetections = faceapi.resizeResults(detections, canvasSize);
 
       // Cria um identificador de rosto com base nos rótulos carregados e em uma tolerância de correspondência
-      const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
+      const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
+
 
       // Encontra a melhor correspondência de cada detecção de rosto com base nos descritores
       const results = resizedDetections.map((d) =>

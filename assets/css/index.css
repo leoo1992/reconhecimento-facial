@@ -11,3 +11,7 @@ body{
 canvas {
   position: absolute;
 }
+
+#cam {
+  filter: grayscale(100%);
+}

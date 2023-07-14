@@ -1,6 +1,5 @@
 // Obtém o elemento de vídeo da câmera
 const cam = document.getElementById("cam");
-let camVideo = ""; // Variável de identificação da câmera
 
 // Função para iniciar o vídeo da câmera
 const startVideo = () => {
@@ -9,7 +8,7 @@ const startVideo = () => {
       devices.forEach((device) => {
         // Rastreia os dispositivos do tipo video input (câmeras)
         if (device.kind === "videoinput") {
-          camVideo = device.label;
+          let camVideo = device.label; // Variável de identificação da câmera
           console.log("Dispositivo = " + device.label);
           // Verifica se o nome da câmera contém a identificação da câmera
           if (device.label.includes(camVideo)) {
@@ -31,8 +30,9 @@ const startVideo = () => {
 
 // Função para carregar os rótulos das imagens de cada pessoa cadastrada
 const loadLabels = async () => {
-  // Array de cadastros - Adicione uma pasta com 3 fotos jpg para cada nome
-  //As imagens deve ser menores possíveis e o nome da pasta deve ser o nome da pessoa
+  // Array de cadastros - Adicione uma pasta com 3 fotos jpg para cada nome/pessoa
+  //o nome da pasta deve ser o nome da pessoa
+  //As imagens deve ser de 60px de altura com seu nome de 1 a 3.jpg <-exp
   const labels = ["Leonardo"]; // Exemplo com um único + pode ter mais no array
   const labeledDescriptors = [];
 
@@ -75,7 +75,6 @@ Promise.all([
   faceapi.nets.faceLandmark68Net.loadFromUri("/assets/lib/face-api/models"), //analisa marcas de expressão
   faceapi.nets.faceRecognitionNet.loadFromUri("/assets/lib/face-api/models"), //resize do video
   faceapi.nets.faceExpressionNet.loadFromUri("/assets/lib/face-api/models"), // analisa expressões faciais
-  faceapi.nets.ageGenderNet.loadFromUri("/assets/lib/face-api/models"), //analisa idade e gênero
   faceapi.nets.ssdMobilenetv1.loadFromUri("/assets/lib/face-api/models"), //requisito
 ]).then(startVideo);
 
@@ -104,7 +103,6 @@ cam.addEventListener("play", async () => {
       .detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions())
       .withFaceLandmarks() //analisa marcas de expressão
       .withFaceExpressions() // analisa expressões faciais
-      .withAgeAndGender() //analisa idade e gênero
       .withFaceDescriptors(); //analisa descrições da face
 
     // Redimensiona as detecções para corresponder ao tamanho do canvas
@@ -123,22 +121,7 @@ cam.addEventListener("play", async () => {
 
     // Desenha as detecções faciais no canvas
     faceapi.draw.drawDetections(canvas, resizedDetections);
-    faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
 
-    // Desenha a idade e gênero estimados em cada rosto
-    resizedDetections.forEach((detection) => {
-      const { age, gender } = detection;
-
-      // Verifica o valor do gênero e exibe "H" para "male" e "F" para "female"
-      const genderText = gender === "male" ? "H" : "M";
-      new faceapi.draw.DrawTextField(
-        [
-          `${parseInt(age, 10)} Anos`,
-          `${genderText}`,
-        ],
-        detection.detection.box.topRight
-      ).draw(canvas);
-    });
 
     // Desenha o nome da pessoa
     results.forEach((result, index) => {
@@ -146,10 +129,10 @@ cam.addEventListener("play", async () => {
       const { label } = result;
       new faceapi.draw.DrawTextField(
         [`${label}`],
-        box.bottomRight
+        box.topRight
         ).draw(canvas);
       });
-    }, 100);
+    }, 300);
   });
 
    

@@ -63,7 +63,7 @@ const loadLabels = async () => {
   //o nome da pasta deve ser o nome da pessoa
   //As imagens deve ser de 60px de altura com seu nome de 1 a 3.jpg <-exp
   try {
-    const labels = ["Leonardo"]; // Exemplo com um único + pode ter mais no array
+    const labels = ["Leonardo", "Antony", "Eduardo", "Fábio", "Fernando", "Filipe", "Lucas", "Prof Samuel", "Raphael", "Rogério", "Salvan", "Samuel"]; // Array pessoas
     const labeledDescriptors = [];
 
     await Promise.all(

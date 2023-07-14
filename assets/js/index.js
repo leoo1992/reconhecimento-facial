@@ -9,7 +9,7 @@ const loadModelsAndStartVideo = async () => {
       faceapi.nets.faceExpressionNet.loadFromUri("/assets/lib/face-api/models"),
       faceapi.nets.ssdMobilenetv1.loadFromUri("/assets/lib/face-api/models"),
     ]);
-    console.error("Modelos carregados com sucesso.", error);
+    console.error("Modelos carregados com sucesso.");
 
     await startVideo();
   } catch (error) {
@@ -21,7 +21,7 @@ const loadModelsAndStartVideo = async () => {
 // Função para iniciar o vídeo da câmera frontal...dispositivo notebook ou celular
 const startVideo = async () => {
   try {
-    console.error("Iniciando vídeo da câmera...", error);
+    console.error("Iniciando vídeo da câmera...");
     const isMobileDevice =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
@@ -42,6 +42,7 @@ const startVideo = async () => {
     }
 
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    const cam = document.getElementById("camera"); // Adicionei essa linha para obter a referência ao elemento de vídeo da câmera
     cam.srcObject = stream;
 
     // Aguardar um tempo para a câmera estar pronta
@@ -49,17 +50,17 @@ const startVideo = async () => {
 
     // Verificar se o stream da câmera foi carregado corretamente
     if (!cam.srcObject || !cam.srcObject.getTracks().length) {
-      throw new Error("Ocorreu um erro ao carregar o stream da câmera.", error);
+      throw new Error("Ocorreu um erro ao carregar o stream da câmera.");
     }
 
     // Carregar os rótulos das imagens
     const labels = await loadLabels();
 
     if (labels.length === 0) {
-      throw new Error("Nenhum rótulo foi carregado.", error);
+      throw new Error("Nenhum rótulo foi carregado.");
     }
 
-    console.error("Vídeo da câmera iniciado. Iniciando detecção de rostos e reconhecimento facial.", error);
+    console.error("Vídeo da câmera iniciado. Iniciando detecção de rostos e reconhecimento facial.");
 
     const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
 
@@ -74,13 +75,14 @@ const startVideo = async () => {
 
         const resizedDetections = faceapi.resizeResults(
           detections,
-          canvasSize
+          { width: cam.videoWidth, height: cam.videoHeight } // Alterei essa linha para obter as dimensões corretas do vídeo da câmera
         );
 
         const results = resizedDetections.map((d) =>
           faceMatcher.findBestMatch(d.descriptor)
         );
 
+        const canvas = document.getElementById("canvas"); // Adicionei essa linha para obter a referência ao elemento de canvas
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         faceapi.draw.drawDetections(canvas, resizedDetections);
         results.forEach((result, index) => {
@@ -131,7 +133,7 @@ const loadLabels = async () => {
 
     for (let i = 1; i <= 3; i++) {
       const imagePath = `/assets/lib/face-api/labels/${label}/${i}.jpg`;
-      console.error("Carregando imagem:", imagePath, error);
+      console.error("Carregando imagem:", imagePath);
 
       try {
         const img = await faceapi.fetchImage(imagePath);
@@ -166,7 +168,7 @@ const loadLabels = async () => {
       "Nenhum rosto válido foi detectado nas imagens de treinamento."
     );
   } else {
-    console.error("Rótulos carregados com sucesso.", error);
+    console.error("Rótulos carregados com sucesso.");
   }
 
   return labeledFaceDescriptors;
@@ -174,11 +176,9 @@ const loadLabels = async () => {
 
 // Verificar a disponibilidade da API do navegador
 try {
-  checkBrowserCompatibility();
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error("A API do navegador não é compatível.");
+  }
 } catch (error) {
   console.error("O navegador não é compatível:", error);
-  // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário ou enviar um relatório de erro.
-}
-
-// Chamar a função para carregar os modelos e iniciar o vídeo da câmera
-loadModelsAndStartVideo();
+  // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário

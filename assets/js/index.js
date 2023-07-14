@@ -72,6 +72,10 @@
       }
     }
   
+    if (labeledFaceDescriptors.length === 0) {
+      throw new Error("Não foi possível detectar nenhum rosto válido nas imagens de treinamento.");
+    }
+  
     return labeledFaceDescriptors;
   };
   

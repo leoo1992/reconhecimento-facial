@@ -135,7 +135,7 @@ const loadLabels = async () => {
       for (let i = 1; i <= 3; i++) {
         try {
           const img = await faceapi.fetchImage(
-            `/assets/lib/face-api/labels/${encodeURIComponent(label)}/${i}.jpg`
+            `./assets/lib/face-api/labels/${encodeURIComponent(label)}/${i}.jpg`
           );
 
           const detections = await faceapi

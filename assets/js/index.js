@@ -14,7 +14,7 @@
       if (isMobileDevice) {
         constraints = {
           video: {
-            facingMode: { exact: "environment" },
+            facingMode: { exact: "user" },
           },
         };
       } else {

@@ -91,6 +91,9 @@
     const labels = await loadLabels();
     faceapi.matchDimensions(canvas, canvasSize);
     document.body.appendChild(canvas);
+  
+    const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
+  
     setInterval(async () => {
       const detections = await faceapi
         .detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions())
@@ -98,10 +101,11 @@
         .withFaceExpressions()
         .withFaceDescriptors();
       const resizedDetections = faceapi.resizeResults(detections, canvasSize);
-      const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
+  
       const results = resizedDetections.map((d) =>
         faceMatcher.findBestMatch(d.descriptor)
       );
+  
       canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
       faceapi.draw.drawDetections(canvas, resizedDetections);
       results.forEach((result, index) => {
@@ -114,3 +118,4 @@
       });
     }, 250);
   });
+  

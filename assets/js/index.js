@@ -63,52 +63,35 @@ window.onload = async () => {
   // Função para detectar rostos e realizar o reconhecimento facial
   const detectFaces = async () => {
     try {
-      // Cria um canvas para desenhar as detecções faciais
-      const canvas = faceapi.createCanvasFromMedia(cam);
-      const canvasSize = {
-        width: cam.width,
-        height: cam.height,
-      };
+      const canvas = document.createElement("canvas");
+      const displaySize = { width: cam.width, height: cam.height };
+      faceapi.matchDimensions(canvas, displaySize);
 
-      // Ajusta as dimensões do canvas
-      faceapi.matchDimensions(canvas, canvasSize);
-
-      // Adiciona o canvas ao corpo do documento HTML
       document.body.appendChild(canvas);
 
-      // Carrega os rótulos das imagens de cada pessoa cadastrada
       const labels = await loadLabels();
 
-      // Cria um identificador de rosto com base nos rótulos carregados e em uma tolerância de correspondência
       const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
 
-      // Executa repetidamente a detecção de rostos e desenho no canvas
       setInterval(async () => {
-        // Detecta todos os rostos no vídeo usando um modelo de detecção facial leve
         const detections = await faceapi
           .detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions())
-          .withFaceLandmarks() // analisa marcas de expressão
-          .withFaceExpressions() // analisa expressões faciais
-          .withFaceDescriptors(); // analisa descrições da face
+          .withFaceLandmarks()
+          .withFaceDescriptors();
 
-        // Redimensiona as detecções para corresponder ao tamanho do canvas
         const resizedDetections = faceapi.resizeResults(
           detections,
-          canvasSize
+          displaySize
         );
 
-        // Encontra a melhor correspondência de cada detecção de rosto com base nos descritores
         const results = resizedDetections.map((d) =>
           faceMatcher.findBestMatch(d.descriptor)
         );
 
-        // Limpa o canvas
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-        // Desenha as detecções faciais no canvas
         faceapi.draw.drawDetections(canvas, resizedDetections);
 
-        // Desenha o nome da pessoa
         results.forEach((result, index) => {
           const box = resizedDetections[index].detection.box;
           const { label } = result;
@@ -116,7 +99,7 @@ window.onload = async () => {
             canvas
           );
         });
-      }, 250);
+      }, 100);
     } catch (error) {
       console.error("Erro durante a detecção de rostos:", error);
     }

@@ -109,8 +109,7 @@ window.onload = async () => {
     }
   };
 
-  // Função para carregar os rótulos das imagens de cada pessoa cadastrada
-  // Função para carregar os rótulos das imagens de cada pessoa cadastrada
+// Função para carregar os rótulos das imagens de cada pessoa cadastrada
 const loadLabels = async () => {
   try {
     const labels = [
@@ -134,9 +133,19 @@ const loadLabels = async () => {
 
       for (let i = 1; i <= 3; i++) {
         try {
-          const img = await faceapi.fetchImage(
+          const response = await fetch(
             `./assets/lib/face-api/labels/${encodeURIComponent(label)}/${i}.jpg`
           );
+
+          if (!response.ok) {
+            console.warn(
+              `Não foi possível carregar a imagem ${i} de ${label}. Ignorando esta imagem.`
+            );
+            continue;
+          }
+
+          const blob = await response.blob();
+          const img = await faceapi.bufferToImage(blob);
 
           const detections = await faceapi
             .detectSingleFace(img)
@@ -181,6 +190,7 @@ const loadLabels = async () => {
     return [];
   }
 };
+
 
 
   // Carrega os modelos necessários, inicia o vídeo e detecta rostos

@@ -1,6 +1,7 @@
 // Função para carregar os modelos e iniciar o vídeo da câmera
 const loadModelsAndStartVideo = async () => {
   try {
+    console.log("Carregando modelos...");
     await Promise.all([
       faceapi.nets.tinyFaceDetector.loadFromUri("/assets/lib/face-api/models"),
       faceapi.nets.faceLandmark68Net.loadFromUri("/assets/lib/face-api/models"),
@@ -8,6 +9,7 @@ const loadModelsAndStartVideo = async () => {
       faceapi.nets.faceExpressionNet.loadFromUri("/assets/lib/face-api/models"),
       faceapi.nets.ssdMobilenetv1.loadFromUri("/assets/lib/face-api/models"),
     ]);
+    console.log("Modelos carregados com sucesso.");
 
     await startVideo();
   } catch (error) {
@@ -19,6 +21,7 @@ const loadModelsAndStartVideo = async () => {
 // Função para iniciar o vídeo da câmera frontal...dispositivo notebook ou celular
 const startVideo = async () => {
   try {
+    console.log("Iniciando vídeo da câmera...");
     const isMobileDevice =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
@@ -50,6 +53,8 @@ const startVideo = async () => {
     if (labels.length === 0) {
       throw new Error("Nenhum rótulo foi carregado.");
     }
+
+    console.log("Vídeo da câmera iniciado. Iniciando detecção de rostos e reconhecimento facial.");
 
     const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
 
@@ -121,7 +126,7 @@ const loadLabels = async () => {
 
     for (let i = 1; i <= 3; i++) {
       const imagePath = `/assets/lib/face-api/labels/${label}/${i}.jpg`;
-      console.log("Image path:", imagePath);
+      console.log("Carregando imagem:", imagePath);
 
       try {
         const img = await faceapi.fetchImage(imagePath);
@@ -157,6 +162,7 @@ const loadLabels = async () => {
     );
   }
 
+  console.log("Rótulos carregados com sucesso.");
   return labeledFaceDescriptors;
 };
 

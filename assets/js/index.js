@@ -26,6 +26,12 @@ window.onload = async () => {
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       cam.srcObject = stream;
+
+      return new Promise((resolve) => {
+        cam.onloadedmetadata = () => {
+          resolve();
+        };
+      });
     } catch (error) {
       console.error("Erro ao iniciar o vídeo da câmera:", error);
     }
@@ -177,7 +183,7 @@ window.onload = async () => {
     }
   };
 
-  // Carrega os modelos necessários e inicia o vídeo
+  // Carrega os modelos necessários, inicia o vídeo e detecta rostos
   await loadModels();
   await startVideo();
   await detectFaces();

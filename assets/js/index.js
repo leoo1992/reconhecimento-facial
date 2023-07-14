@@ -57,12 +57,12 @@
   
         const img = await faceapi.fetchImage(imagePath);
         const detections = await faceapi
-          .detectSingleFace(img)
+          .detectAllFaces(img)
           .withFaceLandmarks()
-          .withFaceDescriptor();
+          .withFaceDescriptors();
   
-        if (detections && detections.descriptor) {
-          descriptions.push(detections.descriptor);
+        if (detections.length > 0) {
+          descriptions.push(detections[0].descriptor);
         }
       }
   
@@ -78,6 +78,7 @@
   
     return labeledFaceDescriptors;
   };
+  
   
   
   

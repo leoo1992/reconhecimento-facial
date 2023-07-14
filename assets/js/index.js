@@ -63,15 +63,9 @@ window.onload = async () => {
   // Função para detectar rostos e realizar o reconhecimento facial
   const detectFaces = async () => {
     try {
-      const canvas = document.createElement("canvas");
-      const displaySize = { width: cam.width, height: cam.height };
-      faceapi.matchDimensions(canvas, displaySize);
+      const labeledDescriptors = await loadLabels();
 
-      document.body.appendChild(canvas);
-
-      const labels = await loadLabels();
-
-      const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
+      const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.6);
 
       setInterval(async () => {
         const detections = await faceapi
@@ -79,27 +73,29 @@ window.onload = async () => {
           .withFaceLandmarks()
           .withFaceDescriptors();
 
-        const resizedDetections = faceapi.resizeResults(
-          detections,
-          displaySize
-        );
-
-        const results = resizedDetections.map((d) =>
+        const results = detections.map((d) =>
           faceMatcher.findBestMatch(d.descriptor)
         );
 
+        const canvas = faceapi.createCanvasFromMedia(cam);
+        faceapi.matchDimensions(canvas, cam);
+        document.body.appendChild(canvas);
+
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
 
-        faceapi.draw.drawDetections(canvas, resizedDetections);
-
+        faceapi.draw.drawDetections(canvas, detections);
         results.forEach((result, index) => {
-          const box = resizedDetections[index].detection.box;
-          const { label } = result;
-          new faceapi.draw.DrawTextField([`${label}`], box.topLeft).draw(
-            canvas
-          );
+          const { label, distance } = result;
+          const box = detections[index].detection.box;
+
+          const drawOptions = {
+            label: `${label}`,
+          };
+
+          const drawBox = new faceapi.draw.DrawBox(box, drawOptions);
+          drawBox.draw(canvas);
         });
-      }, 100);
+      }, 250);
     } catch (error) {
       console.error("Erro durante a detecção de rostos:", error);
     }

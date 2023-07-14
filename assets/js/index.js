@@ -32,7 +32,7 @@
   
 
   // Função para carregar os rótulos das imagens de cada pessoa cadastrada
-  const loadLabels = () => {
+  const loadLabels = async () => {
     const labels = [
       "Antony",
       "Eduardo",
@@ -47,28 +47,33 @@
       "Salvan",
       "Samuel"
     ];
-    return Promise.all(
-      labels.map(async (label) => {
-        const descriptions = [];
-        for (let i = 1; i <= 3; i++) {
-          const img = await faceapi.fetchImage(
-            `/assets/lib/face-api/labels/${label}/${i}.jpg`
-          );
-          const detections = await faceapi
-            .detectSingleFace(img)
-            .withFaceLandmarks()
-            .withFaceDescriptor();
-          if (detections) { // Verificar se detections é válido
-            descriptions.push(detections.descriptor);
-          }
+    const labeledFaceDescriptors = [];
+  
+    for (const label of labels) {
+      const descriptions = [];
+      for (let i = 1; i <= 3; i++) {
+        const img = await faceapi.fetchImage(
+          `/assets/lib/face-api/labels/${label}/${i}.jpg`
+        );
+        const detections = await faceapi
+          .detectSingleFace(img)
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+  
+        if (detections && detections.descriptor) {
+          descriptions.push(detections.descriptor);
         }
-        if (descriptions.length > 0) { // Verificar se há detecções válidas
-          return new faceapi.LabeledFaceDescriptors(label, descriptions);
-        }
-        return null; // Ignorar a criação de LabeledFaceDescriptors se não houver detecções válidas
-      }).filter((label) => label !== null) // Filtrar labels nulos
-    );
+      }
+  
+      if (descriptions.length > 0) {
+        const labeledFaceDescriptor = new faceapi.LabeledFaceDescriptors(label, descriptions);
+        labeledFaceDescriptors.push(labeledFaceDescriptor);
+      }
+    }
+  
+    return labeledFaceDescriptors;
   };
+  
   
   
 

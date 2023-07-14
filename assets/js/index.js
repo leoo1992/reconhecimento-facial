@@ -62,10 +62,14 @@
             descriptions.push(detections.descriptor);
           }
         }
-        return new faceapi.LabeledFaceDescriptors(label, descriptions);
-      })
+        if (descriptions.length > 0) { // Verificar se há detecções válidas
+          return new faceapi.LabeledFaceDescriptors(label, descriptions);
+        }
+        return null; // Ignorar a criação de LabeledFaceDescriptors se não houver detecções válidas
+      }).filter((label) => label !== null) // Filtrar labels nulos
     );
   };
+  
   
 
   // Função para carregar os modelos

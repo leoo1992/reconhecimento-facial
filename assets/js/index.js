@@ -1,26 +1,27 @@
+// Obtém o elemento de vídeo da câmera
 const cam = document.getElementById("cam");
-let CamVideo = ""; //variável de identificação da camera
+let camVideo = ""; // Variável de identificação da câmera
 
+// Função para iniciar o vídeo da câmera
 const startVideo = () => {
   navigator.mediaDevices.enumerateDevices().then((devices) => {
     if (Array.isArray(devices)) {
       devices.forEach((device) => {
-        //rastreia os dispositivos do tipo video input (cameras) avalie se o dispositivo possui mais de uma camera
+        // Rastreia os dispositivos do tipo video input (câmeras)
         if (device.kind === "videoinput") {
-          CamVideo = device.label;
-          console.log ("Dispositivo = " + device.label);
-          //includes() <- nome da camera é selecionado (label)
-          if (device.label.includes(CamVideo)) {
-            //selecionando a camera no navegador pelo id dela
-            navigator.getUserMedia(
-              {
+          camVideo = device.label;
+          console.log("Dispositivo = " + device.label);
+          // Verifica se o nome da câmera contém a identificação da câmera
+          if (device.label.includes(camVideo)) {
+            // Seleciona a câmera no navegador pelo seu ID
+            navigator.mediaDevices
+              .getUserMedia({
                 video: {
                   deviceId: device.deviceId,
                 },
-              },
-              (stream) => (cam.srcObject = stream),
-              (error) => console.error(error)
-            );
+              })
+              .then((stream) => (cam.srcObject = stream))
+              .catch((error) => console.error(error));
           }
         }
       });
@@ -28,82 +29,126 @@ const startVideo = () => {
   });
 };
 
-//ensino de identidades
-const loadLabels = () => {
-  const labels = ["Leonardo"];
-  return Promise.all(
+// Função para carregar os rótulos das imagens de cada pessoa cadastrada
+const loadLabels = async () => {
+  // Array de cadastros - Adicione uma pasta com 3 fotos jpg para cada nome
+  const labels = ["Leonardo"]; // Exemplo com um único nome "Leonardo"
+  const labeledDescriptors = [];
+
+  await Promise.all(
     labels.map(async (label) => {
       const descriptions = [];
-      for (let i = 1; i <= 5; i++) {
-        const img = await faceapi.fetchImage(
-          `/assets/lib/face-api/labels/${label}/${i}.jpg`
-        );
-        const detections = await faceapi
-          .detectSingleFace(img)
-          .withFaceLandmarks()
-          .withFaceDescriptor();
 
-        if (detections) {
-          descriptions.push(detections.descriptor);
-        }
-        console.log(label + " " + i);
+    // Percorre as imagens de cada pasta
+    for (let i = 1; i <= 3; i++) {
+      const img = await faceapi.fetchImage(
+        `/assets/lib/face-api/labels/${label}/${i}.jpg`
+      );
+
+      // Detecta a face, pontos de referência e descritores da face na imagem
+      const detections = await faceapi
+        .detectSingleFace(img) // verifica uma pessoa por foto
+        .withFaceLandmarks() //verifica marcas de expressão
+        .withFaceDescriptor(); // identifica as descrições da face
+
+      if (detections) {
+        //adiciona no array as descrições da face identificada
+        descriptions.push(detections.descriptor);
       }
-      return new faceapi.LabeledFaceDescriptors(label, descriptions);
-    })
-  );
+      console.log(label + " " + i);
+    }
+
+    // Cria um objeto de descritores de rosto rotulados para o nome atual
+    labeledDescriptors.push(
+      new faceapi.LabeledFaceDescriptors(label, descriptions)
+    );
+  })
+);
+
+  return labeledDescriptors;
 };
 
+// Carrega os modelos necessários e inicia o vídeo quando eles estiverem prontos
 Promise.all([
-  faceapi.nets.tinyFaceDetector.loadFromUri("/assets/lib/face-api/models"),
-  faceapi.nets.faceLandmark68Net.loadFromUri("/assets/lib/face-api/models"),
-  faceapi.nets.faceRecognitionNet.loadFromUri("/assets/lib/face-api/models"),
-  faceapi.nets.faceExpressionNet.loadFromUri("/assets/lib/face-api/models"),
-  faceapi.nets.ageGenderNet.loadFromUri("/assets/lib/face-api/models"),
-  faceapi.nets.ssdMobilenetv1.loadFromUri("/assets/lib/face-api/models"),
+  faceapi.nets.tinyFaceDetector.loadFromUri("/assets/lib/face-api/models"), //modela o enquadramento de um rosto
+  faceapi.nets.faceLandmark68Net.loadFromUri("/assets/lib/face-api/models"), //analisa marcas de expressão
+  faceapi.nets.faceRecognitionNet.loadFromUri("/assets/lib/face-api/models"), //resize do video
+  faceapi.nets.faceExpressionNet.loadFromUri("/assets/lib/face-api/models"), // analisa expressões faciais
+  faceapi.nets.ageGenderNet.loadFromUri("/assets/lib/face-api/models"), //analisa idade e gênero
+  faceapi.nets.ssdMobilenetv1.loadFromUri("/assets/lib/face-api/models"), //requisito
 ]).then(startVideo);
 
+// Evento "play" do vídeo da câmera
 cam.addEventListener("play", async () => {
+  // Cria um canvas para desenhar as detecções faciais
   const canvas = faceapi.createCanvasFromMedia(cam);
   const canvasSize = {
     width: cam.width,
     height: cam.height,
   };
+
+  // Carrega os rótulos das imagens de cada pessoa cadastrada
   const labels = await loadLabels();
+
+  // Ajusta as dimensões do canvas
   faceapi.matchDimensions(canvas, canvasSize);
+
+  // Adiciona o canvas ao corpo do documento HTML
   document.body.appendChild(canvas);
+
+  // Executa repetidamente a detecção de rostos e desenho no canvas
   setInterval(async () => {
+    // Detecta todos os rostos no vídeo usando um modelo de detecção facial leve
     const detections = await faceapi
       .detectAllFaces(cam, new faceapi.TinyFaceDetectorOptions())
-      .withFaceLandmarks()
-      .withFaceExpressions()
-      .withAgeAndGender()
-      .withFaceDescriptors();
+      .withFaceLandmarks() //analisa marcas de expressão
+      .withFaceExpressions() // analisa expressões faciais
+      .withAgeAndGender() //analisa idade e gênero
+      .withFaceDescriptors(); //analisa descrições da face
+
+    // Redimensiona as detecções para corresponder ao tamanho do canvas
     const resizedDetections = faceapi.resizeResults(detections, canvasSize);
+
+    // Cria um identificador de rosto com base nos rótulos carregados e em uma tolerância de correspondência
     const faceMatcher = new faceapi.FaceMatcher(labels, 0.6);
+
+    // Encontra a melhor correspondência de cada detecção de rosto com base nos descritores
     const results = resizedDetections.map((d) =>
       faceMatcher.findBestMatch(d.descriptor)
     );
+
+    // Limpa o canvas
     canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+
+    // Desenha as detecções faciais no canvas
     faceapi.draw.drawDetections(canvas, resizedDetections);
-    faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
     faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+
+    // Desenha a idade e gênero estimados em cada rosto
     resizedDetections.forEach((detection) => {
-      const { age, gender, genderProbability } = detection;
+      const { age, gender } = detection;
+
+      // Verifica o valor do gênero e exibe "H" para "male" e "F" para "female"
+      const genderText = gender === "male" ? "H" : "M";
       new faceapi.draw.DrawTextField(
         [
           `${parseInt(age, 10)} Anos`,
-          `${gender} (${parseInt(genderProbability * 100, 10)}%)`,
+          `${genderText}`,
         ],
         detection.detection.box.topRight
       ).draw(canvas);
     });
+
+    // Desenha o nome da pessoa
     results.forEach((result, index) => {
       const box = resizedDetections[index].detection.box;
-      const { label, distance } = result;
+      const { label } = result;
       new faceapi.draw.DrawTextField(
-        [`${label} (${parseInt(distance * 100, 10)})`],
+        [`${label}`],
         box.bottomRight
-      ).draw(canvas);
-    });
-  }, 100);
-});
+        ).draw(canvas);
+      });
+    }, 100);
+  });
+
+   

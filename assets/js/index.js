@@ -11,7 +11,9 @@ const loadModelsAndStartVideo = async () => {
     ]);
     console.error("Modelos carregados com sucesso.");
 
-    await startVideo();
+    const labels = await loadLabels(); // Carregar os rótulos antes de iniciar o vídeo
+
+    await startVideo(labels); // Passar os rótulos como parâmetro para a função startVideo
   } catch (error) {
     console.error("Erro ao carregar modelos ou iniciar o vídeo:", error);
     // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário ou enviar um relatório de erro.
@@ -19,7 +21,7 @@ const loadModelsAndStartVideo = async () => {
 };
 
 // Função para iniciar o vídeo da câmera frontal...dispositivo notebook ou celular
-const startVideo = async () => {
+const startVideo = async (labels) => {
   try {
     console.error("Iniciando vídeo da câmera...");
     const isMobileDevice =
@@ -27,22 +29,12 @@ const startVideo = async () => {
         navigator.userAgent
       );
 
-    let constraints = {};
-
-    if (isMobileDevice) {
-      constraints = {
-        video: {
-          facingMode: { exact: "user" },
-        },
-      };
-    } else {
-      constraints = {
-        video: { facingMode: "user" },
-      };
-    }
+    const constraints = {
+      video: { facingMode: isMobileDevice ? "user" : "environment" },
+    };
 
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
-    const cam = document.getElementById("camera"); // Adicionei essa linha para obter a referência ao elemento de vídeo da câmera
+    const cam = document.getElementById("cam"); // Corrigido o ID para "cam"
     cam.srcObject = stream;
 
     // Aguardar um tempo para a câmera estar pronta
@@ -51,13 +43,6 @@ const startVideo = async () => {
     // Verificar se o stream da câmera foi carregado corretamente
     if (!cam.srcObject || !cam.srcObject.getTracks().length) {
       throw new Error("Ocorreu um erro ao carregar o stream da câmera.");
-    }
-
-    // Carregar os rótulos das imagens
-    const labels = await loadLabels();
-
-    if (labels.length === 0) {
-      throw new Error("Nenhum rótulo foi carregado.");
     }
 
     console.error("Vídeo da câmera iniciado. Iniciando detecção de rostos e reconhecimento facial.");
@@ -75,14 +60,14 @@ const startVideo = async () => {
 
         const resizedDetections = faceapi.resizeResults(
           detections,
-          { width: cam.videoWidth, height: cam.videoHeight } // Alterei essa linha para obter as dimensões corretas do vídeo da câmera
+          { width: cam.videoWidth, height: cam.videoHeight }
         );
 
         const results = resizedDetections.map((d) =>
           faceMatcher.findBestMatch(d.descriptor)
         );
 
-        const canvas = document.getElementById("canvas"); // Adicionei essa linha para obter a referência ao elemento de canvas
+        const canvas = document.getElementById("canvas");
         canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         faceapi.draw.drawDetections(canvas, resizedDetections);
         results.forEach((result, index) => {
@@ -109,80 +94,3 @@ const startVideo = async () => {
     // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário ou enviar um relatório de erro.
   }
 };
-
-// Função para carregar os rótulos das imagens de cada pessoa cadastrada
-const loadLabels = async () => {
-  const labels = [
-    "Antony",
-    "Eduardo",
-    "Fabio",
-    "Fernando",
-    "Filipe",
-    "Leonardo",
-    "Lucas",
-    "ProfSamuel",
-    "Raphael",
-    "Rogerio",
-    "Salvan",
-    "Samuel",
-  ];
-  const labeledFaceDescriptors = [];
-
-  for (const label of labels) {
-    const descriptions = [];
-
-    for (let i = 1; i <= 3; i++) {
-      const imagePath = `/assets/lib/face-api/labels/${label}/${i}.jpg`;
-      console.error("Carregando imagem:", imagePath);
-
-      try {
-        const img = await faceapi.fetchImage(imagePath);
-        const detections = await faceapi
-          .detectSingleFace(img)
-          .withFaceLandmarks()
-          .withFaceDescriptor();
-
-        if (detections && detections.descriptor) {
-          descriptions.push(detections.descriptor);
-        }
-      } catch (error) {
-        console.error(
-          `Erro ao processar imagem ${imagePath}:`,
-          error
-        );
-        // Realizar ações para lidar com o erro, se necessário.
-      }
-    }
-
-    if (descriptions.length > 0) {
-      const labeledFaceDescriptor = new faceapi.LabeledFaceDescriptors(
-        label,
-        descriptions
-      );
-      labeledFaceDescriptors.push(labeledFaceDescriptor);
-    }
-  }
-
-  if (labeledFaceDescriptors.length === 0) {
-    console.warn(
-      "Nenhum rosto válido foi detectado nas imagens de treinamento."
-    );
-  } else {
-    console.error("Rótulos carregados com sucesso.");
-  }
-
-  return labeledFaceDescriptors;
-};
-
-// Verificar a disponibilidade da API do navegador
-try {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    throw new Error("A API do navegador não é compatível.");
-  }
-} catch (error) {
-  console.error("O navegador não é compatível:", error);
-  // Realizar ações para lidar com o erro, como exibir uma mensagem de erro na interface do usuário ou enviar um relatório de erro.
-}
-
-// Chamar a função para carregar os modelos e iniciar o vídeo da câmera
-loadModelsAndStartVideo();

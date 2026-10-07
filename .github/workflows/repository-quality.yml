@@ -1,6 +1,7 @@
 name: Repository Quality
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -11,6 +12,8 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
